@@ -6,7 +6,7 @@ Python Library for PowerDNS REST API
 Author: Benton Snyder
 Website: http://bensnyde.me
 Created: 2/21/15
-Revised: 5/17/16
+Revised: 5/21/16
 
 """
 import requests
