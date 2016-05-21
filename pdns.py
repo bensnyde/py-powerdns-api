@@ -3,33 +3,37 @@ Python Library for PowerDNS REST API
 
         http://doc.powerdns.com/md/httpapi/api_spec/
 
-"""
+Author: Benton Snyder
+Website: http://bensnyde.me
+Created: 2/21/15
+Revised: 5/17/16
 
+"""
 import requests
 import json
+
 
 class PowerDNS:
     def __init__(self, base_url, apikey):
         self.base_url = base_url
         self.apikey = apikey
 
-    def _query(self, uri, method, **kwargs):
-        headers = {'X-API-Key': self.apikey, 'Accept': 'application/json'}
-        url = self.base_url+uri
-
-        if kwargs:
-                kwargs = json.dumps(kwargs)
+    def _query(self, uri, method, kwargs):
+        headers = {
+            'X-API-Key': self.apikey,
+            'Accept': 'application/json'
+        }
 
         if method == "GET":
-            request = requests.get(url, headers=headers)
+            request = requests.get(self.base_url+uri, headers=headers)
         elif method == "POST":
-            request = requests.post(url, headers=headers, data=kwargs)
+            request = requests.post(self.base_url+uri, headers=headers, data=kwargs)
         elif method == "PUT":
-            request = requests.put(url, headers=headers, data=kwargs)
+            request = requests.put(self.base_url+uri, headers=headers, data=kwargs)
         elif method == "PATCH":
-            request = requests.patch(url, headers=headers, data=kwargs)
+            request = requests.patch(self.base_url+uri, headers=headers, data=kwargs)
         elif method == "DELETE":
-            request = requests.delete(url, headers=headers)
+            request = requests.delete(self.base_url+uri, headers=headers)
 
         return request.json()
 
@@ -40,13 +44,11 @@ class PowerDNS:
         return self._query("/servers/localhost/zones/%s" % domain, "GET")
 
     def create_zone(self, domain):
-        data = {
+        return self._query("/servers/localhost/zones", "POST", {
                 'kind': 'Native',
                 'nameservers': ['ns1.example.com', 'ns2.example.com'],
                 'name': domain
-        }
-
-        return self._query("/servers/localhost/zones", "POST", **data)
+        })
 
     def delete_zone(self, domain):
         return self._query("/servers/localhost/zones/%s" % domain, "DELETE")
@@ -64,49 +66,22 @@ class PowerDNS:
 
             rrsets example:
 
-                                [{
-                                            'type': 'A',
-                                            'name': 'mail.example.com',
-                                            'changetype': 'delete'
-                                        },
-                                        {
-                                            'type': 'MX',
-                                            'name': 'example.com',
-                                            'changetype': 'replace',
-                                            'records': [{'content': '0 example.com',
-                                                      'disabled': False,
-                                                      'name': 'example.com',
-                                                      'ttl': 600,
-                                                      'type': 'MX'}],
-                                        }
-                                ]
+            [{
+                'type': 'A',
+                'name': 'mail.example.com',
+                'changetype': 'delete'
+            },
+            {
+                'type': 'MX',
+                'name': 'example.com',
+                'changetype': 'replace',
+                'records': [{'content': '0 example.com',
+                          'disabled': False,
+                          'name': 'example.com',
+                          'ttl': 600,
+                          'type': 'MX'}],
+            }]
         """
-        data = {
+        return self._query("/servers/localhost/zones/%s" % domain, "PATCH", {
             'rrsets': rrsets
-        }
-
-        return self._query("/servers/localhost/zones/%s" % domain, "PATCH", **data)
-
-
-pdns = PowerDNS("http://127.0.0.1:8081", "changeme")
-print pdns.create_zone("fdsafdsa.com")
-print pdns.get_zone("fdsafdsa.com")
-
-a = [{
-            'type': 'A',
-            'name': 'mail.example.com',
-            'changetype': 'delete'
-        },
-        {
-            'type': 'MX',
-            'name': 'example.com',
-            'changetype': 'replace',
-            'records': [{'content': '0 example.com',
-                      'disabled': False,
-                      'name': 'example.com',
-                      'ttl': 600,
-                      'type': 'MX'}],
-        }
-]
-
-#print pdns.set_zone_records("example.com", a)
+        })
